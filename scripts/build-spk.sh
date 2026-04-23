@@ -129,8 +129,8 @@ cp "${NODE_BINARY}" "${PACKAGE_STAGE}/bin/node"
 chmod 755 "${PACKAGE_STAGE}/bin/node"
 
 # Built WeTTY application (JS + client assets)
-cp -r "${REPO_ROOT}/build/"   "${PACKAGE_STAGE}/app/build/"
-cp -r "${REPO_ROOT}/conf/"    "${PACKAGE_STAGE}/app/conf/"
+cp -r "${REPO_ROOT}/build/."  "${PACKAGE_STAGE}/app/build/"
+cp -r "${REPO_ROOT}/conf/."   "${PACKAGE_STAGE}/app/conf/"
 cp    "${REPO_ROOT}/package.json" "${PACKAGE_STAGE}/app/"
 
 # node_modules (includes pre-compiled native modules for this arch)
