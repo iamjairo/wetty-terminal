@@ -114,7 +114,7 @@ A ready-made Nginx snippet is also included at:
 | Architecture | SPK `arch` value | Example models |
 |---|---|---|
 | Intel/AMD 64-bit | `x86_64` | DS923+, DS720+, DS220+, RS820+ |
-| ARM 64-bit | `aarch64` | DS923+ (some), DS224+, RS422+ |
+| ARM 64-bit | `aarch64` | DS223, DS124, RT6600ax, MR2200ac |
 
 > **Cross-compilation note:** `node-pty` contains native C++ code compiled for the build machine's architecture. Build the SPK on an x86_64 Linux host for x86_64 NAS models. For aarch64, run the build script inside a native or QEMU-emulated aarch64 Docker container.
 

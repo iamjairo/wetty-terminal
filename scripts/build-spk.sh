@@ -81,13 +81,21 @@ pnpm build
 echo ""
 echo "[2/6] Fetching latest Node.js ${NODE_MAJOR} LTS binary for ${ARCH} ..."
 
-# Resolve the latest patch release for the requested major
-NODE_VERSION=$(curl -fsSL "https://nodejs.org/dist/latest-v${NODE_MAJOR}.x/SHASUMS256.txt" \
-    | grep "node-v.*-linux-${NODE_ARCH}.tar.xz" \
+mkdir -p "${REPO_ROOT}/.cache"
+
+# Fetch SHASUMS256.txt — used both to resolve the latest patch version and to
+# verify the integrity of the downloaded tarball.
+SHASUMS_URL="https://nodejs.org/dist/latest-v${NODE_MAJOR}.x/SHASUMS256.txt"
+SHASUMS_FILE="${REPO_ROOT}/.cache/SHASUMS256-v${NODE_MAJOR}-${NODE_ARCH}.txt"
+echo "  Fetching checksums from ${SHASUMS_URL} ..."
+curl -fsSL -o "${SHASUMS_FILE}" "${SHASUMS_URL}"
+
+# Parse bare semver (e.g. "20.11.1") — strip leading "v" and the platform suffix.
+NODE_VERSION=$(grep "node-v.*-linux-${NODE_ARCH}.tar.xz" "${SHASUMS_FILE}" \
     | head -1 \
     | awk '{print $2}' \
-    | sed 's/-linux-.*//' \
-    | sed 's/node-//')
+    | sed 's/node-v//' \
+    | sed 's/-linux-.*//')
 
 if [ -z "${NODE_VERSION}" ]; then
     echo "ERROR: Could not determine Node.js version for major ${NODE_MAJOR}."
@@ -98,13 +106,31 @@ NODE_TARBALL="node-v${NODE_VERSION}-linux-${NODE_ARCH}.tar.xz"
 NODE_URL="https://nodejs.org/dist/v${NODE_VERSION}/${NODE_TARBALL}"
 NODE_CACHE="${REPO_ROOT}/.cache/${NODE_TARBALL}"
 
-mkdir -p "${REPO_ROOT}/.cache"
+# Extract the expected SHA-256 for this specific tarball.
+EXPECTED_SHA256=$(grep "${NODE_TARBALL}" "${SHASUMS_FILE}" | awk '{print $1}')
+if [ -z "${EXPECTED_SHA256}" ]; then
+    echo "ERROR: Could not find SHA-256 checksum for ${NODE_TARBALL}."
+    exit 1
+fi
+
 if [ ! -f "${NODE_CACHE}" ]; then
     echo "  Downloading ${NODE_URL} ..."
     curl -fsSL -o "${NODE_CACHE}" "${NODE_URL}"
 else
     echo "  Using cached ${NODE_TARBALL}"
 fi
+
+# Verify integrity before extracting — fail hard on mismatch and remove the bad file.
+echo "  Verifying SHA-256 ..."
+ACTUAL_SHA256=$(sha256sum "${NODE_CACHE}" | awk '{print $1}')
+if [ "${ACTUAL_SHA256}" != "${EXPECTED_SHA256}" ]; then
+    echo "ERROR: SHA-256 mismatch for ${NODE_TARBALL}!"
+    echo "  Expected : ${EXPECTED_SHA256}"
+    echo "  Actual   : ${ACTUAL_SHA256}"
+    rm -f "${NODE_CACHE}"
+    exit 1
+fi
+echo "  SHA-256 verified OK"
 
 NODE_TMP=$(mktemp -d)
 tar -xf "${NODE_CACHE}" -C "${NODE_TMP}" --strip-components=1

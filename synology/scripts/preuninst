@@ -13,8 +13,14 @@ if [ -f "${PID_FILE}" ]; then
     PID=$(cat "${PID_FILE}")
     if kill -0 "${PID}" 2>/dev/null; then
         kill "${PID}"
-        sleep 1
-        # Force-kill if still alive
+        # Wait up to 10 s for a clean shutdown
+        i=1
+        while [ "${i}" -le 10 ]; do
+            kill -0 "${PID}" 2>/dev/null || break
+            sleep 1
+            i=$((i + 1))
+        done
+        # Force-kill if still alive after the grace period
         kill -0 "${PID}" 2>/dev/null && kill -9 "${PID}" 2>/dev/null
     fi
     rm -f "${PID_FILE}"
