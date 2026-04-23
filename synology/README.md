@@ -12,7 +12,7 @@ A self-contained Synology Package (`.spk`) that installs and runs **WeTTY Termin
 # x86_64 NAS (most common — DS9xx+, DS7xx+, etc.)
 ./scripts/build-spk.sh
 
-# aarch64 NAS (e.g. DS923+, RS822+)
+# aarch64 NAS (e.g. DS223, RT6600ax)
 ./scripts/build-spk.sh --arch aarch64
 ```
 
