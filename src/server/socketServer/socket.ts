@@ -14,7 +14,7 @@ export const listen = (
   path: string,
   { key, cert }: SSLBuffer,
   socket?: string | boolean
-): Server =>{
+): Server => {
   // Create the base HTTP/HTTPS server
   const server = !isUndefined(key) && !isUndefined(cert)
     ? https.createServer({ key, cert }, app)

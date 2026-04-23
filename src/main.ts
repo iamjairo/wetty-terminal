@@ -138,11 +138,12 @@ function cleanup() {
   }
 }
 function exit() {
-  process.exit(1);
+  process.exit(0);
 }
 
 if (!opts.help) {
   process.on('SIGINT', exit);
+  process.on('SIGTERM', exit);
   process.on('exit', cleanup);
   loadConfigFile(opts.conf)
     .then((config) => mergeCliConf(opts, config))
