@@ -70,16 +70,9 @@ echo "  Node.js major   : ${NODE_MAJOR}"
 echo "  Output          : ${DIST_DIR}/${SPK_NAME}"
 echo "============================================================"
 
-# ── Step 1 — Build WeTTY ──────────────────────────────────────────────────────
+# ── Step 1 — Download and extract Node.js binary ─────────────────────────────
 echo ""
-echo "[1/6] Installing dependencies and building WeTTY ..."
-cd "${REPO_ROOT}"
-pnpm install --frozen-lockfile
-pnpm build
-
-# ── Step 2 — Download and extract Node.js binary ─────────────────────────────
-echo ""
-echo "[2/6] Fetching latest Node.js ${NODE_MAJOR} LTS binary for ${ARCH} ..."
+echo "[1/6] Fetching latest Node.js ${NODE_MAJOR} LTS binary for ${ARCH} ..."
 
 mkdir -p "${REPO_ROOT}/.cache"
 
@@ -136,7 +129,19 @@ NODE_TMP=$(mktemp -d)
 tar -xf "${NODE_CACHE}" -C "${NODE_TMP}" --strip-components=1
 NODE_BINARY="${NODE_TMP}/bin/node"
 
-echo "  Bundling Node.js v${NODE_VERSION}"
+echo "  Using Node.js v${NODE_VERSION}"
+
+# Prepend the downloaded Node.js v${NODE_MAJOR} bin directory to PATH so that
+# pnpm install (and any node-gyp native compilation) uses the correct Node.js
+# version rather than whatever happens to be installed system-wide.
+export PATH="${NODE_TMP}/bin:${PATH}"
+
+# ── Step 2 — Build WeTTY ──────────────────────────────────────────────────────
+echo ""
+echo "[2/6] Installing dependencies and building WeTTY ..."
+cd "${REPO_ROOT}"
+pnpm install --frozen-lockfile
+pnpm build
 
 # ── Step 3 — Assemble staging area ───────────────────────────────────────────
 echo ""
