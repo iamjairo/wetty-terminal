@@ -1,0 +1,29 @@
+#!/bin/sh
+
+# Pre-uninstall script for WeTTY Terminal
+# Runs before the package files are removed.
+
+PACKAGE="wetty"
+INSTALL_DIR="/var/packages/${PACKAGE}/target"
+VAR_DIR="${INSTALL_DIR}/var"
+PID_FILE="${VAR_DIR}/wetty.pid"
+
+# ── Stop the service if it is running ─────────────────────────────────────────
+if [ -f "${PID_FILE}" ]; then
+    PID=$(cat "${PID_FILE}")
+    if kill -0 "${PID}" 2>/dev/null; then
+        kill "${PID}"
+        # Wait up to 10 s for a clean shutdown
+        i=1
+        while [ "${i}" -le 10 ]; do
+            kill -0 "${PID}" 2>/dev/null || break
+            sleep 1
+            i=$((i + 1))
+        done
+        # Force-kill if still alive after the grace period
+        kill -0 "${PID}" 2>/dev/null && kill -9 "${PID}" 2>/dev/null
+    fi
+    rm -f "${PID_FILE}"
+fi
+
+exit 0

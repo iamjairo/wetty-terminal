@@ -1,0 +1,34 @@
+#!/bin/sh
+
+# Pre-install script for WeTTY Terminal
+# Runs before the package files are extracted.
+
+PACKAGE="wetty"
+DNAME="WeTTY Terminal"
+DSM_MIN_MAJOR=7
+DSM_MIN_MINOR=0
+
+# ── DSM version check ──────────────────────────────────────────────────────────
+DSM_VER=$(cat /etc/VERSION 2>/dev/null | grep "^productversion=" | cut -d'"' -f2)
+DSM_MAJOR=$(echo "${DSM_VER}" | cut -d'.' -f1)
+DSM_MINOR=$(echo "${DSM_VER}" | cut -d'.' -f2)
+
+if [ -n "${DSM_MAJOR}" ]; then
+    if [ "${DSM_MAJOR}" -lt "${DSM_MIN_MAJOR}" ]; then
+        echo "${DNAME} requires DSM ${DSM_MIN_MAJOR}.${DSM_MIN_MINOR} or later."
+        exit 1
+    fi
+    if [ "${DSM_MAJOR}" -eq "${DSM_MIN_MAJOR}" ] && [ "${DSM_MINOR}" -lt "${DSM_MIN_MINOR}" ]; then
+        echo "${DNAME} requires DSM ${DSM_MIN_MAJOR}.${DSM_MIN_MINOR} or later."
+        exit 1
+    fi
+fi
+
+# ── Port availability check ────────────────────────────────────────────────────
+PORT=13338
+if netstat -tlnp 2>/dev/null | grep -q ":${PORT} "; then
+    echo "Port ${PORT} is already in use. Please free it before installing ${DNAME}."
+    exit 1
+fi
+
+exit 0

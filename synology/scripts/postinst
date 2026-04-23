@@ -1,0 +1,33 @@
+#!/bin/sh
+
+# Post-install script for WeTTY Terminal
+# Runs after the package files are extracted.
+
+PACKAGE="wetty"
+INSTALL_DIR="/var/packages/${PACKAGE}/target"
+CONF_DIR="${INSTALL_DIR}/conf"
+VAR_DIR="${INSTALL_DIR}/var"
+DEFAULT_CONF="${CONF_DIR}/wetty.config"
+SYNOPKG_CONF_DIR="/var/packages/${PACKAGE}/etc"
+
+# ── Create runtime directories ─────────────────────────────────────────────────
+mkdir -p "${VAR_DIR}"
+chmod 750 "${VAR_DIR}"
+
+# ── Copy default config to persistent location if not already present ──────────
+mkdir -p "${SYNOPKG_CONF_DIR}"
+if [ ! -f "${SYNOPKG_CONF_DIR}/wetty.config" ]; then
+    cp "${DEFAULT_CONF}" "${SYNOPKG_CONF_DIR}/wetty.config"
+fi
+
+# ── Ensure the bundled node binary is executable ───────────────────────────────
+chmod 755 "${INSTALL_DIR}/bin/node"
+
+# ── Fix ownership and permissions ─────────────────────────────────────────────
+chown -R root:root "${INSTALL_DIR}"
+chmod -R 755 "${INSTALL_DIR}/bin"
+if [ -d "${INSTALL_DIR}/scripts" ]; then
+    chmod -R 755 "${INSTALL_DIR}/scripts"
+fi
+
+exit 0
