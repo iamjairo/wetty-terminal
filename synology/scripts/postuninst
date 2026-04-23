@@ -1,0 +1,15 @@
+#!/bin/sh
+
+# Post-uninstall script for WeTTY Terminal
+# Runs after the package files are removed.
+
+PACKAGE="wetty"
+SYNOPKG_CONF_DIR="/var/packages/${PACKAGE}/etc"
+
+# ── Remove persisted configuration ────────────────────────────────────────────
+# Preserve user config on upgrade (SYNOPKG_PKG_STATUS=UPGRADE), remove on purge.
+if [ "${SYNOPKG_PKG_STATUS}" != "UPGRADE" ]; then
+    rm -rf "${SYNOPKG_CONF_DIR}"
+fi
+
+exit 0

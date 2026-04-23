@@ -1,0 +1,123 @@
+#!/bin/sh
+
+# start-stop-status script for WeTTY Terminal
+# Called by DSM Package Center to manage the service lifecycle.
+
+PACKAGE="wetty"
+DNAME="WeTTY Terminal"
+INSTALL_DIR="/var/packages/${PACKAGE}/target"
+VAR_DIR="${INSTALL_DIR}/var"
+LOG_FILE="${VAR_DIR}/wetty.log"
+PID_FILE="${VAR_DIR}/wetty.pid"
+
+# Use the persistent config if it exists, otherwise fall back to the bundled default.
+CONF_FILE="/var/packages/${PACKAGE}/etc/wetty.config"
+if [ ! -f "${CONF_FILE}" ]; then
+    CONF_FILE="${INSTALL_DIR}/conf/wetty.config"
+fi
+
+NODE="${INSTALL_DIR}/bin/node"
+WETTY_MAIN="${INSTALL_DIR}/app/build/main.js"
+
+# ── Helpers ────────────────────────────────────────────────────────────────────
+
+is_running() {
+    [ -f "${PID_FILE}" ] && kill -0 "$(cat "${PID_FILE}")" 2>/dev/null
+}
+
+start_daemon() {
+    mkdir -p "${VAR_DIR}"
+    NODE_ENV=production \
+        "${NODE}" "${WETTY_MAIN}" --conf "${CONF_FILE}" \
+        >> "${LOG_FILE}" 2>&1 &
+    echo $! > "${PID_FILE}"
+}
+
+stop_daemon() {
+    PID=$(cat "${PID_FILE}" 2>/dev/null)
+    if [ -n "${PID}" ]; then
+        kill "${PID}" 2>/dev/null
+        # Wait up to 10 s for a clean shutdown
+        for i in $(seq 1 10); do
+            kill -0 "${PID}" 2>/dev/null || break
+            sleep 1
+        done
+        # Force-kill if still alive
+        kill -0 "${PID}" 2>/dev/null && kill -9 "${PID}" 2>/dev/null
+    fi
+    rm -f "${PID_FILE}"
+}
+
+# ── Command dispatch ───────────────────────────────────────────────────────────
+
+case "$1" in
+    start)
+        if is_running; then
+            echo "${DNAME} is already running."
+            exit 0
+        fi
+        echo "Starting ${DNAME} ..."
+        start_daemon
+        sleep 1
+        if is_running; then
+            echo "${DNAME} started successfully."
+            exit 0
+        else
+            echo "Failed to start ${DNAME}. Check ${LOG_FILE} for details."
+            exit 1
+        fi
+        ;;
+
+    stop)
+        if is_running; then
+            echo "Stopping ${DNAME} ..."
+            stop_daemon
+            echo "${DNAME} stopped."
+        else
+            echo "${DNAME} is not running."
+        fi
+        exit 0
+        ;;
+
+    status)
+        if is_running; then
+            echo "${DNAME} is running (PID $(cat "${PID_FILE}"))."
+            exit 0
+        else
+            echo "${DNAME} is not running."
+            exit 1
+        fi
+        ;;
+
+    killall)
+        stop_daemon
+        exit 0
+        ;;
+
+    restart)
+        if is_running; then
+            echo "Restarting ${DNAME} ..."
+            stop_daemon
+        fi
+        start_daemon
+        sleep 1
+        if is_running; then
+            echo "${DNAME} restarted successfully."
+            exit 0
+        else
+            echo "Failed to restart ${DNAME}. Check ${LOG_FILE} for details."
+            exit 1
+        fi
+        ;;
+
+    log)
+        # Return the path to the log file so DSM can display it.
+        echo "${LOG_FILE}"
+        exit 0
+        ;;
+
+    *)
+        echo "Usage: $0 {start|stop|status|restart|killall|log}"
+        exit 1
+        ;;
+esac
