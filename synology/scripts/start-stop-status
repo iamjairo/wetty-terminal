@@ -38,9 +38,11 @@ stop_daemon() {
     if [ -n "${PID}" ]; then
         kill "${PID}" 2>/dev/null
         # Wait up to 10 s for a clean shutdown
-        for i in $(seq 1 10); do
+        i=1
+        while [ "${i}" -le 10 ]; do
             kill -0 "${PID}" 2>/dev/null || break
             sleep 1
+            i=$((i + 1))
         done
         # Force-kill if still alive
         kill -0 "${PID}" 2>/dev/null && kill -9 "${PID}" 2>/dev/null
