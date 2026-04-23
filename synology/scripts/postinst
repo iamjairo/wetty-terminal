@@ -26,6 +26,8 @@ chmod 755 "${INSTALL_DIR}/bin/node"
 # ── Fix ownership and permissions ─────────────────────────────────────────────
 chown -R root:root "${INSTALL_DIR}"
 chmod -R 755 "${INSTALL_DIR}/bin"
-chmod -R 755 "${INSTALL_DIR}/scripts"
+if [ -d "${INSTALL_DIR}/scripts" ]; then
+    chmod -R 755 "${INSTALL_DIR}/scripts"
+fi
 
 exit 0
